@@ -1,0 +1,371 @@
+# rubocop:disable LineLength
+# rubocop:disable EmptyLines
+
+require 'minitest/autorun'
+require_relative '../asset_manager.rb'
+
+
+DatabaseCleaner.strategy = :transaction
+ActiveRecord::Base.logger = nil
+
+class AssetMgrTest < Minitest::Unit::TestCase
+  include Rack::Test::Methods
+
+  def app
+    Sinatra::Application
+  end
+
+  def setup
+    DatabaseCleaner.start
+  end
+
+  def teardown
+    DatabaseCleaner.clean
+  end
+
+  def parse_params(str)
+    Rack::Utils.parse_query(str)
+  end
+
+  def tomorrow
+    (Time.now + 1).strftime('%F')
+  end
+
+  def booking_id
+    MultiJson.load(last_response.body, symbolize_keys: true)[:book][:links][0][:uri].split('/').last.to_i
+  end
+
+  def request_params
+    MultiJson.load(last_response.body, symbolize_keys: true)[:links][0][:uri].split('/').last.split('?').last
+  end
+
+
+  def booking_pattern
+    {
+      book: {
+        from: String,
+        to: String,
+        status: String,
+        user: String,
+        links: [
+          {
+            rel: 'self',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          },
+          {
+            rel: 'reject',
+            uri: /\Ahttps?\:\/\/.*\z/i,
+            method: 'DELETE'
+          },
+          {
+            rel: 'resource',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+        ].forgiving!
+      }
+    }
+  end
+
+  def bookings_pattern
+    {
+      bookings: [
+        {
+          start: String,
+          finish: String,
+          status: String,
+          user: String,
+          links: [
+            {
+              rel: 'self',
+              uri: /\Ahttps?\:\/\/.*\z/i
+            },
+            {
+              rel: 'resource',
+              uri: /\Ahttps?\:\/\/.*\z/i
+            },
+            {
+              rel: 'reject',
+              uri: /\Ahttps?\:\/\/.*\z/i,
+              method: 'DELETE'
+            }].forgiving!
+         }] * 2,
+      links: [
+        {
+          rel: 'self',
+          uri: /\Ahttps?\:\/\/.*\z/i
+        }]
+    }
+  end
+
+### Get bookings tests
+  def test_get_bookings_success
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    get '/resources/1/bookings', 'date' => '2014-05-05', 'limit' => '2'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match bookings_pattern, last_response.body
+  end
+
+  def test_get_bookings_success_default_params
+    get '/resources/1/bookings'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    params = parse_params(request_params)
+    assert_equal tomorrow , params['date']
+    assert_equal '30' , params['limit']
+    assert_equal 'approved' , params['status']
+  end
+
+  def test_get_bookings_success_default_params2
+    get '/resources/1/bookings', 'limit' => 400
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    params = parse_params(request_params)
+    assert_equal '365' , params['limit']
+  end
+
+  def test_get_bookings_fail_not_found
+    get '/resources/10000/bookings'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_get_bookings_fail_bad_request
+    get '/resources/asd/bookings'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_get_bookings_fail_bad_request2
+    get '/resources/asd/bookings', 'limit' => 'asd'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_get_bookings_fail_bad_request3
+    get '/resources/asd/bookings', 'date' => '12/02/2013'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+
+### Get booking tests
+  def test_get_booking_success
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'pending')
+    get '/resources/1/bookings/535'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match booking_pattern, last_response.body
+#
+  end
+
+  def test_get_booking_fail_not_found
+    get '/resources/1/bookings/1'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_get_booking_fail_not_found2
+    get '/resources/10000/bookings/1'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_get_booking_fail_bad_request
+    get '/resources/asd/bookings/1'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_get_booking_fail_bad_request2
+    get '/resources/1/bookings/asd'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+
+
+
+### Reject booking tests
+  def test_delete_booking_sucess
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    delete '/resources/1/bookings/535'
+    assert_equal 200, last_response.status
+  end
+
+  def test_delete_booking_fail_not_found
+    delete '/resources/1/bookings/1'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_delete_booking_fail_not_found2
+    delete '/resources/1000/bookings/1'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_delete_booking_fail_bad_request
+    delete '/resources/asd/bookings/1'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_delete_booking_fail_bad_request2
+    delete '/resources/1/bookings/asd'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+
+
+
+### Approve booking tests
+  def test_approve_booking_fail_not_found
+    put '/resources/1/bookings/1'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_approve_booking_fail_conflict
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'pending')
+    put '/resources/1/bookings/536'
+    assert_equal 409, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_approve_booking_fail_bad_request
+    put '/resources/asd/bookings/1'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_approve_booking_fail_bad_request2
+    put '/resources/1/bookings/asd'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_approve_booking_success
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'pending')
+    Booking.create(resource_id: 1,
+                   start: '2014-05-05 10:00'.to_datetime,
+                   finish: '2014-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'pending')
+    put '/resources/1/bookings/535'
+    assert_equal 200, last_response.status
+    assert_json_match booking_pattern, last_response.body
+    get '/resources/1/bookings/536'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+### Create booking tests
+  def test_create_booking_fail_not_found
+    post '/resources/1000/bookings', 'from' => '2015-04-01 10:00', 'to' => '2015-04-01 11:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  # parameters missing
+  def test_create_fail
+    post '/resources/1/bookings'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_create_success
+    post '/resources/1/bookings', 'from' => '2015-05-01 10:00', 'to' => '2015-05-01 11:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 201, last_response.status
+    assert_json_match booking_pattern, last_response.body
+  end
+
+  # from has invalid dates
+  def test_create_fail_bad_request
+    post '/resources/1/bookings', 'from' => '01/04/2014 10:00', 'to' => '2014-04-01 11:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  # to has invalid date
+  def test_create_fail_bad_request2
+    post '/resources/1/bookings', 'from' => '2014-04-01 10:00', 'to' => '01/04/2014 11:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  # dates in the past
+  def test_create_fail_bad_request3
+    post '/resources/1/bookings', 'from' => '2013-04-01 10:00', 'to' => '2013-04-01 11:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  # to greater than from
+  def test_create_fail_bad_request4
+    post '/resources/1/bookings', 'from' => '2014-04-01 11:00', 'to' => '2014-04-01 10:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_bad_booking_route
+    get '/resources/1/bookings/'
+    assert_equal 404, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+end

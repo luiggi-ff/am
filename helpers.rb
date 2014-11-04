@@ -1,0 +1,31 @@
+helpers do
+  def valid_date?(str, format = '%F')
+    Date.strptime(str, format) rescue false
+  end
+
+  def valid_datetime?(str, format = '%F %R')
+    Date.strptime(str, format) rescue false
+  end
+
+  def valid_integer?(str)
+    str =~ /\d+/
+  end
+
+  def check_and_set(str, default, max)
+    if str.nil?
+      res = default
+    else
+      res = str.to_i
+      res = max if res > max
+    end
+    return res
+  end
+
+  def tomorrow
+    Time.now + 1
+  end
+
+  def json(json)
+    MultiJson.dump(json, pretty: true)
+  end
+end
