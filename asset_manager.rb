@@ -33,7 +33,7 @@ end
 
 post '/resources' do
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_string?(params[:name]) \
-
+                                                        && valid_string?(params[:description])
   new_resource = Resource.create(name: params[:name],
                                  description: params[:description])
   unless new_resource.nil?
@@ -42,6 +42,26 @@ post '/resources' do
   end
 
 end
+
+put '/resources/:r_id/' do
+  halt 400, json({ error_message: "BAD REQUEST" })  unless valid_string?(params[:name]) \
+                                                        && valid_string?(params[:description])
+
+  resource = Resource.find_by_id(params[:r_id])
+  if resource.nil?
+    halt 404, json({ error_message: "Resource NOT FOUND" })
+  else
+    resource.name = params[:name]
+    resource.description = params[:description]
+    if resource.save
+      ResourceDecorator.new(resource, settings.base_url).jsonify
+    end
+  end
+
+end
+
+
+
 
 get '/resources/:id' do
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id])
