@@ -33,9 +33,14 @@ end
 
 post '/resources' do
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_string?(params[:name]) \
-
+                                                        && valid_string?(params[:description])
+  p   params[:name]
+  p params[:description]
   new_resource = Resource.create(name: params[:name],
                                  description: params[:description])
+
+
+
   unless new_resource.nil?
     status 201
     ResourceDecorator.new(new_resource, settings.base_url).jsonify

@@ -120,4 +120,25 @@ class AssetMgrTest < Minitest::Unit::TestCase
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body
   end
+
+### Create resource tests
+
+  # parameters missing
+  def test_create_fail
+    post '/resources'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+  def test_create_success   
+    post '/resources', 'name' => 'proyector2', 'description' => 'proyector S/N 12345'
+    assert_equal 201, last_response.status
+    assert_json_match resource_pattern, last_response.body
+  end
+
+
+
+
+
 end

@@ -12,7 +12,7 @@ helpers do
   end
 
   def valid_string?(str)
-    return !str.nil?
+    return (str.nil?).not
   end
 
   def check_and_set(str, default, max)
