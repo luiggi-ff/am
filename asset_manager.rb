@@ -110,7 +110,6 @@ get '/resources/:id/availability' do
   limit = check_and_set(params[:limit], 30, 365)
   params[:date] ||= tomorrow
   date = params[:date].to_date
-#  p date
   to = (params[:date].to_date + limit)
 
   halt 404, json({ error_message: "Resource NOT FOUND" }) unless Resource.exists?(params[:id])
@@ -122,7 +121,6 @@ end
 
 
 post '/resources/:id/bookings' do
-  p params
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \
                                                         && valid_datetime?(params[:from]) \
                                                         && valid_datetime?(params[:to]) \
@@ -132,8 +130,7 @@ post '/resources/:id/bookings' do
   halt 404, json({ error_message: "Resource NOT FOUND" })  unless Resource.exists?(params[:id])
 
   resource = Resource.find_by_id(params[:id])
-  p resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime).size
-  if resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime).size == 2
+  if resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime).size == 1
     new_booking = Booking.create(resource_id: params[:id],
                                  start: params[:from].to_datetime,
                                  finish: params[:to].to_datetime,
@@ -143,8 +140,6 @@ post '/resources/:id/bookings' do
       status 201
       BookingDecorator.new(new_booking, settings.base_url).jsonify
     end
-
-  else p "fail"
   end
 end
 
@@ -171,7 +166,7 @@ put '/resources/:r_id/bookings/:b_id' do
     halt 404, json({ error_message: "Booking NOT FOUND" })
   else
     resource = Resource.find_by_id(params[:r_id])
-    if resource.available_slots?(booking.start, booking.finish).size == 2
+    if resource.available_slots?(booking.start, booking.finish).size == 1
       booking.status = 'approved'
       if booking.save
         resource.remove_pending(booking.start, booking.finish)

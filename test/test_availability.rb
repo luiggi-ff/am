@@ -130,7 +130,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     params = parse_params(request_params)
-    assert_equal tomorrow, params['date']
+    assert_equal ((Date.today) + 1).strftime('%F'), params['date']
     assert_equal '30', params['limit']
     assert_json_match availability_pattern2, last_response.body
   end

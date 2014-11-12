@@ -1,21 +1,17 @@
 helpers do
   def valid_date?(str, format = '%F')
-#    p "valid_date"
     Date.strptime(str, format) rescue false
   end
 
   def valid_datetime?(str, format = '%F %R')
- #   p "valid_datetime"
     Date.strptime(str, format) rescue false
   end
 
   def valid_integer?(str)
-    #p "valid_integer"
     str =~ /\d+/
   end
 
   def valid_string?(str)
-    #p "valid_string"
     return !str.nil?
   end
 

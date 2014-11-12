@@ -27,9 +27,6 @@ class AssetMgrTest < Minitest::Unit::TestCase
     Rack::Utils.parse_query(str)
   end
 
-  def tomorrow
-    (Time.now + 1).strftime('%F')
-  end
 
   def booking_id
     MultiJson.load(last_response.body, symbolize_keys: true)[:book][:links][0][:uri].split('/').last.to_i
@@ -120,7 +117,8 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     params = parse_params(request_params)
-    assert_equal tomorrow , params['date']
+#    assert_equal , params['date']
+    assert_equal ((Date.today) + 1).strftime('%F')  , params['date']
     assert_equal '30' , params['limit']
     assert_equal 'approved' , params['status']
   end
@@ -309,7 +307,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
   end
 
 ### Create booking tests
-  def test_create_booking_fail_not_found
+  def test_create_booking_fail_not_found   ## DATE MUST BE IN THE FUTURE!!!
     post '/resources/1000/bookings', 'from' => '2015-04-01 10:00', 'to' => '2015-04-01 11:00', 'user' => 'luiggi@gmail.com'
     assert_equal 404, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
@@ -324,7 +322,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_json_match error_message_pattern, last_response.body
   end
 
-  def test_create_success
+  def test_create_success    ## DATE MUST BE IN THE FUTURE!!!
     post '/resources/1/bookings', 'from' => '2015-05-01 10:00', 'to' => '2015-05-01 11:00', 'user' => 'luiggi@gmail.com'
     assert_equal 201, last_response.status
     assert_json_match booking_pattern, last_response.body

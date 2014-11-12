@@ -165,7 +165,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_json_match error_message_pattern, last_response.body
   end
 
-  def test_bad_route
+  def test_bad_availability_route
     get '/resources/1/availability/'
     assert_equal 404, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
