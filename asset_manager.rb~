@@ -32,8 +32,15 @@ get '/resources' do
 end
 
 post '/resources' do
-  halt 400, json({ error_message: "BAD REQUEST" })  unless valid_string?(params[:name]) \
-                                                        && valid_string?(params[:description])
+  halt 400, json({ error_message: "BAD REQUEST" })  unless  valid_string?(params[:name]) \
+                                                       && valid_string?(params[:description])
+
+
+#!params[:name].nil? \
+ #                                                       || !params[:description].nil?
+
+#unless valid_string?(params[:name]) \
+ #                                                       && valid_string?(params[:description])
   new_resource = Resource.create(name: params[:name],
                                  description: params[:description])
   unless new_resource.nil?
@@ -44,9 +51,11 @@ post '/resources' do
 end
 
 put '/resources/:r_id' do
-  halt 400, json({ error_message: "BAD REQUEST" })  unless valid_string?(params[:name]) \
-                                                        && valid_string?(params[:description]) \
-                                                        && valid_integer?(params[:r_id])
+  halt 400, json({ error_message: "BAD REQUEST" })  unless  valid_string?(params[:name]) \
+                                                       && valid_string?(params[:description])
+                                                       && valid_integer?(params[:r_id])
+#  p params[:r_id]
+#&& !valid_integer?(params[:r_id])
   resource = Resource.find_by_id(params[:r_id])
   if resource.nil?
     halt 404, json({ error_message: "Resource NOT FOUND" })

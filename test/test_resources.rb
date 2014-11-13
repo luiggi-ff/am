@@ -137,6 +137,14 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_json_match resource_pattern, last_response.body
   end
 
+  def test_create_fail   
+    post '/resources',  'description' => 'proyector S/N 12345'
+    assert_equal 400, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+
+
 ### Modify resource tests
   def test_modify_resource_fail_bad_request
     put '/resources/1'
