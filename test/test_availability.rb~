@@ -96,6 +96,92 @@ class AssetMgrTest < Minitest::Unit::TestCase
   }
   end
 
+  def availability_pattern_1
+    {
+     availability: [
+        {
+        start: String,
+        finish: String,
+        links: [
+          {
+            rel: 'book',
+            uri: /\Ahttps?\:\/\/.*\z/i,
+            method: 'POST'
+          },
+          {
+            rel: 'resource',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+        ]
+      }
+     ] * 1,
+     links: [
+          {
+            rel: 'self',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+    ]
+  }
+  end
+
+  def availability_pattern_0
+    {
+     availability: [
+        {
+        start: String,
+        finish: String,
+        links: [
+          {
+            rel: 'book',
+            uri: /\Ahttps?\:\/\/.*\z/i,
+            method: 'POST'
+          },
+          {
+            rel: 'resource',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+        ]
+      }
+     ] * 0,
+     links: [
+          {
+            rel: 'self',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+    ]
+  }
+  end
+
+  def availability_pattern_2
+    {
+     availability: [
+        {
+        start: String,
+        finish: String,
+        links: [
+          {
+            rel: 'book',
+            uri: /\Ahttps?\:\/\/.*\z/i,
+            method: 'POST'
+          },
+          {
+            rel: 'resource',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+        ]
+      }
+     ] * 2,
+     links: [
+          {
+            rel: 'self',
+            uri: /\Ahttps?\:\/\/.*\z/i
+          }
+    ]
+  }
+  end
+
+
+
   def error_message_pattern
     {
       error_message: String
@@ -125,12 +211,88 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_json_match availability_pattern, last_response.body
   end
 
+  def test_get_availability_success_1   #nothing free
+    Booking.create(resource_id: 1,
+                   start: '2014-12-01 00:00'.to_datetime,
+                   finish: '2014-12-04 00:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match availability_pattern_0, last_response.body
+  end
+
+  def test_get_availability_success_2    #booking at begin and finish, slot free in the midle
+    Booking.create(resource_id: 1,
+                   start: '2014-12-01 00:00'.to_datetime,
+                   finish: '2014-12-02 00:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    Booking.create(resource_id: 1,
+                   start: '2014-12-03 00:00'.to_datetime,
+                   finish: '2014-12-04 00:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match availability_pattern_2, last_response.body
+  end
+
+  def test_get_availability_success_3   #booking at finish
+    Booking.create(resource_id: 1,
+                   start: '2014-12-03 00:00'.to_datetime,
+                   finish: '2014-12-04 00:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match availability_pattern_1, last_response.body
+  end
+
+  def test_get_availability_success_4   #booking at begin
+    Booking.create(resource_id: 1,
+                   start: '2014-12-01 00:00'.to_datetime,
+                   finish: '2014-12-02 00:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match availability_pattern_1, last_response.body
+  end
+
+  def test_get_availability_success_5   #all free
+    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match availability_pattern_1, last_response.body
+  end
+
+  def test_get_availability_success_6   #booking at the middle, free slots at begin and finish
+    Booking.create(resource_id: 1,
+                   start: '2014-12-02 00:00'.to_datetime,
+                   finish: '2014-12-03 00:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    assert_equal 200, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match availability_pattern_2, last_response.body
+  end
+
+
+
+
+
   def test_get_availability_success_default_params
     get '/resources/1/availability'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     params = parse_params(request_params)
-    assert_equal tomorrow, params['date']
+    assert_equal ((Date.today) + 1).strftime('%F'), params['date']
     assert_equal '30', params['limit']
     assert_json_match availability_pattern2, last_response.body
   end

@@ -44,4 +44,4 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_json_match error_message_pattern, last_response.body
   end
 
-end
+end 

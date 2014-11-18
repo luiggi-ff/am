@@ -26,7 +26,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
 
 ### Integration tests
-  def test_create_approve_delete_booking
+  def test_create_approve_delete_booking      ## DATES MUST BE IN THE FUTURE!!!
     post '/resources/1/bookings', 'from' => '2015-05-01 10:00', 'to' => '2015-05-01 11:00', 'user' => 'luiggi@gmail.com'
     assert_equal 201, last_response.status
 
