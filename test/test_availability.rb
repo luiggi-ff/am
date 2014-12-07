@@ -42,7 +42,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
   def availability_pattern
     {
-     availability: [
+     availabilities: [
         {
         start: String,
         finish: String,
@@ -70,7 +70,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
   def availability_pattern2
     {
-     availability: [
+     availabilities: [
         {
         start: String,
         finish: String,
@@ -98,7 +98,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
   def availability_pattern_1
     {
-     availability: [
+     availabilities: [
         {
         start: String,
         finish: String,
@@ -126,7 +126,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
   def availability_pattern_0
     {
-     availability: [
+        availabilities: [
         {
         start: String,
         finish: String,
@@ -154,7 +154,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
   def availability_pattern_2
     {
-     availability: [
+        availabilities: [
         {
         start: String,
         finish: String,
@@ -205,7 +205,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-05-14 12:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    get '/resources/1/availability', 'date' => '2014-05-12', 'limit' => '3'
+      get '/resources/1/availabilities', 'date' => '2014-05-12', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern, last_response.body
@@ -217,7 +217,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-12-04 00:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+      get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern_0, last_response.body
@@ -234,7 +234,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-12-04 00:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+      get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern_1, last_response.body
@@ -246,7 +246,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-12-04 00:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+      get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern_1, last_response.body
@@ -258,14 +258,14 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-12-02 00:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+      get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern_1, last_response.body
   end
 
   def test_get_availability_success_5   #all free
-    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+    get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern_1, last_response.body
@@ -277,7 +277,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-12-03 00:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    get '/resources/1/availability', 'date' => '2014-12-1', 'limit' => '3'
+      get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match availability_pattern_2, last_response.body
@@ -288,47 +288,47 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
 
   def test_get_availability_success_default_params
-    get '/resources/1/availability'
+    get '/resources/1/availabilities'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     params = parse_params(request_params)
     assert_equal ((Date.today) + 1).strftime('%F'), params['date']
     assert_equal '30', params['limit']
-    assert_json_match availability_pattern2, last_response.body
+    assert_json_match availability_pattern_2, last_response.body
   end
 
   def test_get_availability_success_default_params2
-    get '/resources/1/availability', 'limit' => '400'
+      get '/resources/1/availabilities', 'limit' => '400'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     params = parse_params(request_params)
     assert_equal '365' , params['limit']
-    assert_json_match availability_pattern2, last_response.body
+    assert_json_match availability_pattern, last_response.body
   end
 
   def test_get_availability_fail_not_found
-    get '/resources/1000/availability', 'date' => '2014-02-12', 'limit' => '3'
+      get '/resources/1000/availabilities', 'date' => '2014-02-12', 'limit' => '3'
     assert_equal 404, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body
   end
 
   def test_get_availability_fail_bad_request
-    get '/resources/1/availability', 'date' => '2014-02-12', 'limit' => 'asd'
+      get '/resources/1/availabilities', 'date' => '2014-02-12', 'limit' => 'asd'
     assert_equal 400, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body
   end
 
   def test_get_availability_fail_bad_request2
-    get '/resources/1/availability', 'date' => '12/02/2014', 'limit' => 'asd'
+      get '/resources/1/availabilities', 'date' => '12/02/2014', 'limit' => 'asd'
     assert_equal 400, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body
   end
 
   def test_bad_availability_route
-    get '/resources/1/availability/'
+      get '/resources/1/availabilities/'
     assert_equal 404, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body

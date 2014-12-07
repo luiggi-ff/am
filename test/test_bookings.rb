@@ -39,7 +39,9 @@ class AssetMgrTest < Minitest::Unit::TestCase
 
   def booking_pattern
     {
-      book: {
+      booking: {
+        resource_id: Integer,
+        id: Integer,
         from: String,
         to: String,
         status: String,
@@ -67,6 +69,8 @@ class AssetMgrTest < Minitest::Unit::TestCase
     {
       bookings: [
         {
+          resource_id: Integer,
+          id: Integer,
           start: String,
           finish: String,
           status: String,
@@ -166,7 +170,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-05-05 11:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'pending')
-    get '/resources/1/bookings/535'
+    get '/resources/1/bookings/584'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match booking_pattern, last_response.body
@@ -210,7 +214,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-05-05 11:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'approved')
-    delete '/resources/1/bookings/535'
+    delete '/resources/1/bookings/584'
     assert_equal 200, last_response.status
   end
 
@@ -264,7 +268,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-05-05 11:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'pending')
-    put '/resources/1/bookings/536'
+    put '/resources/1/bookings/585'
     assert_equal 409, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body
@@ -295,10 +299,10 @@ class AssetMgrTest < Minitest::Unit::TestCase
                    finish: '2014-05-05 11:00'.to_datetime,
                    user: 'luiggi@abc.com',
                    status: 'pending')
-    put '/resources/1/bookings/535'
+    put '/resources/1/bookings/584'
     assert_equal 200, last_response.status
     assert_json_match booking_pattern, last_response.body
-    get '/resources/1/bookings/536'
+    get '/resources/1/bookings/585'
     assert_equal 404, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body

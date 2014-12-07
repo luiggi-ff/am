@@ -1,8 +1,8 @@
 development:
   port: 9292
-  base_url: 'http://localhost:9292/'
+  base_url: 'http://orient-vega.codio.io:9292/'
 
 test:
   port: 9292
-  base_url: 'http://localhost:9292/'
+  base_url: 'http://orient-vega.codio.io:9292/'
 

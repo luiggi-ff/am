@@ -31,6 +31,13 @@ get '/resources' do
   ResourceCollectionDecorator.new(resources, settings.base_url).jsonify
 end
 
+#get '/bookings' do
+#  bookings = Booking.all
+#    request="bookings"
+#    BookingCollectionDecorator.new(bookings, settings.base_url).jsonify(request)
+#end
+
+
 post '/resources' do
   halt 400, json({ error_message: "BAD REQUEST" })  unless  valid_string?(params[:name]) \
                                                        && valid_string?(params[:description])
@@ -111,7 +118,7 @@ get '/resources/:id/bookings' do
 end
 
 
-get '/resources/:id/availability' do
+get '/resources/:id/availabilities' do
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \
                                                         && (params[:limit].nil? || valid_integer?(params[:limit])) \
                                                         && (params[:date].nil? || valid_date?(params[:date]))
@@ -124,9 +131,26 @@ get '/resources/:id/availability' do
   halt 404, json({ error_message: "Resource NOT FOUND" }) unless Resource.exists?(params[:id])
 
   avail = Resource.find_by_id(params[:id]).available_slots?(date, to)
-  request = "resources/#{ params[:id] }/availability?date=#{ date }&limit=#{ limit }"
+  request = "resources/#{ params[:id] }/availabilities?date=#{ date }&limit=#{ limit }"
   SlotCollectionDecorator.new(avail, settings.base_url).jsonify(request)
 end
+
+#get '/resources/:id/freeSlots' do
+#  halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \
+#                                                        && (params[:limit].nil? || valid_integer?(params[:limit])) \
+#                                                        && (params[:date].nil? || valid_date?(params[:date]))
+#
+#  limit = check_and_set(params[:limit], 30, 365)
+#  params[:date] ||= tomorrow
+#  date = params[:date].to_date
+#  to = (params[:date].to_date + limit)
+#
+#  halt 404, json({ error_message: "Resource NOT FOUND" }) unless Resource.exists?(params[:id])
+#
+#  avail = Resource.find_by_id(params[:id]).available_slots?(date, to)
+#  request = "resources/#{ params[:id] }/slots?date=#{ date }&limit=#{ limit }"
+#  SlotCollectionDecorator.new(avail, settings.base_url).jsonify(request)
+#end
 
 
 post '/resources/:id/bookings' do

@@ -42,6 +42,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
   def resource_pattern
     {
       resource: {
+        id: Integer,
         name: String,
         description: String,
         links: [
@@ -62,6 +63,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     {
       resources: [
         {
+            id: Integer,
           name: String,
           description: String,
           links: [

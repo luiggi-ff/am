@@ -13,6 +13,7 @@ class ResourceDecorator  < SimpleDelegator
              Link.new('bookings', "#{ @base_url }resources/#{ id }/bookings")]
     json = Jsonify::Builder.new
     json.resource do
+      json.id id
       json.name name
       json.description description
       json.links(links) do |l|
@@ -37,7 +38,9 @@ class BookingDecorator  < SimpleDelegator
 
   def jsonify
     json = Jsonify::Builder.new
-    json.book do
+    json.booking do
+      json.resource_id resource_id
+      json.id id
       json.from start.strftime('%FT%TZ')
       json.to finish.strftime('%FT%TZ')
       json.status status
@@ -64,6 +67,7 @@ class ResourceCollectionDecorator  < SimpleDelegator
     elem = self
     json = Jsonify::Builder.new
     json.resources(elem) do |e|
+      json.id e.id
       json.name e.name
       json.description e.description
       links = [Link.new('self', "#{ @base_url }resources/#{ e.id }")]
@@ -93,6 +97,8 @@ class BookingCollectionDecorator  < SimpleDelegator
     elem = self
     json = Jsonify::Builder.new
     json.bookings(elem) do |e|
+        json.resource_id e.resource_id
+      json.id e.id
       json.start e.start.strftime('%FT%TZ')
       json.finish e.finish.strftime('%FT%TZ')
       json.status e.status
@@ -127,7 +133,8 @@ class SlotCollectionDecorator  < SimpleDelegator
   def jsonify(request)
     elem = self
     json = Jsonify::Builder.new
-    json.availability(elem) do |e|
+#    json.freeSlots(elem) do |e|
+      json.availabilities(elem) do |e|
       json.start e.start.to_datetime.strftime('%FT%TZ')
       json.finish e.finish.to_datetime.strftime('%FT%TZ')
       links = [Link.new('book', "#{ @base_url }resources/#{ e.id }/bookings", 'POST'),
