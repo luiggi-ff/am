@@ -154,15 +154,6 @@ end
 
 
 post '/resources/:id/bookings' do
-#  p '/resources/#{params[:id]}/bookings', valid_integer?(params[:id]) 
-#  p valid_datetime?(params[:from]) 
-#  p valid_datetime?(params[:to]) 
-#  p Time.now < params[:from].to_datetime 
-#  p params[:from].to_datetime < params[:to].to_datetime
-
-
-
-
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \
                                                         && valid_datetime?(params[:from]) \
                                                         && valid_datetime?(params[:to]) \
@@ -172,19 +163,23 @@ post '/resources/:id/bookings' do
   halt 404, json({ error_message: "Resource NOT FOUND" })  unless Resource.exists?(params[:id])
 
   resource = Resource.find_by_id(params[:id])
-#  p "book - params",params[:from].to_datetime, params[:to].to_datetime
-#  p "book - available slots",resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime)
-  if resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime).size == 1
-    new_booking = Booking.create(resource_id: params[:id],
-                                 start: params[:from].to_datetime,
-                                 finish: params[:to].to_datetime,
-                                 user: params[:user],
-                                 status: 'pending')
-    unless new_booking.nil?
-      status 201
-      BookingDecorator.new(new_booking, settings.base_url).jsonify
-    end
-  else halt 409, json({ error_message: "Booking CONFLICT" })
+  available_slots = resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime)
+  if available_slots.size  == 1
+      if (available_slots[0].start <= params[:from].to_datetime && available_slots[0].finish >= params[:to].to_datetime)
+        new_booking = Booking.create(resource_id: params[:id],
+                                     start: params[:from].to_datetime,
+                                     finish: params[:to].to_datetime,
+                                     user: params[:user],
+                                     status: 'pending')
+        unless new_booking.nil?
+          status 201
+          BookingDecorator.new(new_booking, settings.base_url).jsonify
+        end
+      else 
+        halt 409, json({ error_message: "Booking CONFLICT" })
+      end
+  else 
+    halt 409, json({ error_message: "Booking CONFLICT" })
   end
 end
 

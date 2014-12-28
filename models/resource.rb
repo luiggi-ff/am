@@ -44,6 +44,7 @@ class Resource < ActiveRecord::Base
     return avail
   end
 
+    
   def available_slots?(start, finish)
     bookings = Booking.where('resource_id = ? AND start >= ? AND finish <= ? AND status = ?', id, start.to_datetime, finish.to_datetime, 'approved')
     avail = bookings.load.map { |b| [b.start.strftime('%FT%TZ'), b.finish.strftime('%FT%TZ')] }.sort.flatten

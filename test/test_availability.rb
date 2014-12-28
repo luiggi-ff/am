@@ -40,7 +40,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
   end
 
 
-  def availability_pattern
+  def availability_pattern(n) 
     {
      availabilities: [
         {
@@ -58,7 +58,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
           }
         ]
       }
-     ] * 3,
+     ] * n,
      links: [
           {
             rel: 'self',
@@ -208,7 +208,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
       get '/resources/1/availabilities', 'date' => '2014-05-12', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern, last_response.body
+    assert_json_match availability_pattern(3), last_response.body
   end
 
   def test_get_availability_success_1   #nothing free
@@ -220,7 +220,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
       get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern_0, last_response.body
+    assert_json_match availability_pattern(0), last_response.body
   end
 
   def test_get_availability_success_2    #booking at begin and finish, slot free in the midle
@@ -237,7 +237,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
       get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern_1, last_response.body
+    assert_json_match availability_pattern(1), last_response.body
   end
 
   def test_get_availability_success_3   #booking at finish
@@ -249,7 +249,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
       get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern_1, last_response.body
+    assert_json_match availability_pattern(1), last_response.body
   end
 
   def test_get_availability_success_4   #booking at begin
@@ -261,14 +261,14 @@ class AssetMgrTest < Minitest::Unit::TestCase
       get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern_1, last_response.body
+    assert_json_match availability_pattern(1), last_response.body
   end
 
   def test_get_availability_success_5   #all free
     get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern_1, last_response.body
+    assert_json_match availability_pattern(1), last_response.body
   end
 
   def test_get_availability_success_6   #booking at the middle, free slots at begin and finish
@@ -280,7 +280,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
       get '/resources/1/availabilities', 'date' => '2014-12-1', 'limit' => '3'
     assert_equal 200, last_response.status
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
-    assert_json_match availability_pattern_2, last_response.body
+    assert_json_match availability_pattern(2), last_response.body
   end
 
 
@@ -294,7 +294,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     params = parse_params(request_params)
     assert_equal ((Date.today) + 1).strftime('%F'), params['date']
     assert_equal '30', params['limit']
-    assert_json_match availability_pattern_2, last_response.body
+    assert_json_match availability_pattern(1), last_response.body
   end
 
   def test_get_availability_success_default_params2
@@ -303,7 +303,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     params = parse_params(request_params)
     assert_equal '365' , params['limit']
-    assert_json_match availability_pattern, last_response.body
+    assert_json_match availability_pattern(2), last_response.body
   end
 
   def test_get_availability_fail_not_found

@@ -273,6 +273,7 @@ class AssetMgrTest < Minitest::Unit::TestCase
     last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
     assert_json_match error_message_pattern, last_response.body
   end
+    
 
   def test_approve_booking_fail_bad_request
     put '/resources/asd/bookings/1'
@@ -362,6 +363,19 @@ class AssetMgrTest < Minitest::Unit::TestCase
     assert_json_match error_message_pattern, last_response.body
   end
 
+    def test_create_booking_fail_conflict
+    Booking.create(resource_id: 1,
+                   start: '2015-05-05 00:00'.to_datetime,
+                   finish: '2015-05-05 11:00'.to_datetime,
+                   user: 'luiggi@abc.com',
+                   status: 'approved')
+    post '/resources/1/bookings', 'from' => '2015-05-05 00:00', 'to' => '2015-05-06 00:00', 'user' => 'luiggi@gmail.com'
+    assert_equal 409, last_response.status
+    last_response.headers['Content-Type'].must_equal 'application/json;charset=utf-8'
+    assert_json_match error_message_pattern, last_response.body
+  end
+    
+    
   def test_bad_booking_route
     get '/resources/1/bookings/'
     assert_equal 404, last_response.status
