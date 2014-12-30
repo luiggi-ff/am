@@ -29,6 +29,11 @@ helpers do
     DateTime.now + 1
   end
 
+  def today
+    DateTime.now
+  end
+
+    
   def json(json)
     MultiJson.dump(json, pretty: true)
   end

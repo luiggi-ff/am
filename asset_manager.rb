@@ -117,6 +117,27 @@ get '/resources/:id/bookings' do
 
 end
 
+get '/bookings' do
+ # halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \
+ #                                                       && (params[:limit].nil? || valid_integer?(params[:limit])) \
+ #                                                       && (params[:date].nil? || valid_date?(params[:date]))
+
+ limit = check_and_set(params[:limit], 30, 365)
+ params[:date] ||= today
+ params[:status] ||= 'all'
+ date = params[:date].to_date
+ to = (params[:date].to_date + limit)
+ # 
+ # halt 404, json({ error_message: "Resource NOT FOUND" }) unless Resource.exists?(params[:id])
+    bookings =  Booking.from_date(nil, date, to, params[:status]).where(user: params[:user])
+    #if params[:status] != 'all'
+    #    bookings = bookings.where(status: params[:status])
+    #end
+  request = "bookings?user=#{ params[:user] }&status=#{ params[:status] }"
+  BookingCollectionDecorator.new(bookings, settings.base_url).jsonify(request)
+
+end
+
 
 get '/resources/:id/availabilities' do
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \

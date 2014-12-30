@@ -9,7 +9,11 @@ class Booking < ActiveRecord::Base
   validates :user, presence: true
 
   def self.from_date(resource, date, to, status)
-    bookings = Booking.where('resource_id = ? AND start >= ? AND start <= ?', resource, date, to)
+    if !resource.nil?
+        bookings = Booking.where('resource_id = ? AND start >= ? AND start <= ?', resource, date, to)
+    else
+        bookings = Booking.where('start >= ? AND start <= ?', date, to)
+    end
     bookings = bookings.where('status = ?', status) if status != 'all'
     bookings.load
   end
