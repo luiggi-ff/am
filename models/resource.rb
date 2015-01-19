@@ -48,7 +48,11 @@ class Resource < ActiveRecord::Base
   def available_slots?(start, finish)
     bookings = Booking.where('resource_id = ? AND start >= ? AND finish <= ? AND status = ?', id, start.to_datetime, finish.to_datetime, 'approved')
     avail = bookings.load.map { |b| [b.start.strftime('%FT%TZ'), b.finish.strftime('%FT%TZ')] }.sort.flatten
-    start_date= start.to_datetime.strftime('%FT%TZ')
+    if start == DateTime.now.to_date
+       start_date = DateTime.now.strftime('%FT%TZ')
+    else     
+       start_date= start.to_datetime.strftime('%FT%TZ')
+    end
     finish_date= finish.to_datetime.strftime('%FT%TZ')
 
     avail.insert(0, start_date)
