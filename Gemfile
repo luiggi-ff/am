@@ -8,13 +8,14 @@ gem "rake"
 #gem "tux"
 gem "json"
 gem "sinatra-contrib"
-#gem "pry"
+gem "pry"
 #gem "rb-readline"
 gem 'jsonify'
 
 
 group :test do
   gem 'database_cleaner'
+  #gem 'database_cleaner-remote_api', '~> 0.1.0'
   gem 'json_expressions' , :require => ['json_expressions/minitest']
   gem 'rack-test'
   gem 'minitest'

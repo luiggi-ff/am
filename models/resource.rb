@@ -49,7 +49,8 @@ class Resource < ActiveRecord::Base
     bookings = Booking.where('resource_id = ? AND start >= ? AND finish <= ? AND status = ?', id, start.to_datetime, finish.to_datetime, 'approved')
     avail = bookings.load.map { |b| [b.start.strftime('%FT%TZ'), b.finish.strftime('%FT%TZ')] }.sort.flatten
     if start == DateTime.now.to_date
-       start_date = DateTime.now.strftime('%FT%TZ')
+       start_date = ((DateTime.now + 1.hour).change(:hour => 0)).strftime('%FT%TZ')
+       # start_date= (start_date 
     else     
        start_date= start.to_datetime.strftime('%FT%TZ')
     end

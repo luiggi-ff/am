@@ -8,23 +8,36 @@ require './decorators'
 require './models/resource'
 require './models/booking'
 require './helpers'
-
+require 'database_cleaner'
 
 DB_CONFIG = YAML::load(File.open('config/database.yml'))[ENV['RACK_ENV']]
 APP_CONFIG = YAML::load(File.open('config/app.yml'))[ENV['RACK_ENV']]
+
 
 set :database, "#{DB_CONFIG['adapter']}:///#{DB_CONFIG['database']}"
 set :port, APP_CONFIG['port']
 set :base_url, APP_CONFIG['base_url']
 
+
+
 Link = Struct.new(:type, :url, :method)
 Slot = Struct.new(:id, :start, :finish)
 
+DatabaseCleaner[:active_record].strategy = :transaction
 
 before do
   content_type 'application/json', charset: 'utf-8'
 end
+  
+get '/dbc_start' do
+  DatabaseCleaner.start
+    json({ dbc_message: "Database cleaner STARTED" })
+end
 
+get '/dbc_clean' do
+  DatabaseCleaner.clean
+    json({ dbc_message: "Database cleaner CLEANED" })
+end
 
 get '/resources' do
   resources = Resource.all
@@ -175,6 +188,7 @@ end
 
 
 post '/resources/:id/bookings' do
+
   halt 400, json({ error_message: "BAD REQUEST" })  unless valid_integer?(params[:id]) \
                                                         && valid_datetime?(params[:from]) \
                                                         && valid_datetime?(params[:to]) \
@@ -182,7 +196,7 @@ post '/resources/:id/bookings' do
                                                         && params[:from].to_datetime < params[:to].to_datetime
 
   halt 404, json({ error_message: "Resource NOT FOUND" })  unless Resource.exists?(params[:id])
-
+  
   resource = Resource.find_by_id(params[:id])
   available_slots = resource.available_slots?(params[:from].to_datetime, params[:to].to_datetime)
   if available_slots.size  == 1
